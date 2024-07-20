@@ -1,0 +1,20 @@
+database_info:
+  DB_NAME : 'weather_analytics'
+  DB_LOCATION : 'data/'
+
+api_info:
+  base_url: "https://api.open-meteo.com/v1/forecast"
+  default_params:
+    latitude: 52.52
+    longitude: 13.41
+  current_params:
+    - temperature_2m
+  hourly_params:
+    - temperature_2m
+  forecast_days: 1
+
+app_settings:
+  update_interval_minutes: 5 
+  port: 1001
+  host: "127.0.0.1"
+
