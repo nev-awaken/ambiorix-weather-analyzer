@@ -1,7 +1,7 @@
 box::use(
-  ../jobs/setup_database[setupDatabase],
-  ../jobs/fetch_and_store_data/weather_jobs[fetchAndStoreWeatherData],
-  ../helper/utils[getAppSettingsInfo]
+  .. / jobs / setup_database / create_database[setupDatabase],
+  .. / jobs / fetch_and_store_data / weather_jobs[fetchAndStoreWeatherData],
+  .. / helper / utils[getAppSettingsInfo]
 )
 
 box::use(
@@ -47,7 +47,7 @@ executionPipeline <- async(function() {
             delay <- calculateDelay(updateIntervalMinutes)
             if (!is.na(delay)) {
               message(sprintf("Next fetch scheduled in %.2f minutes", delay))
-              later::later(recurringFetch, delay = delay * 60) 
+              later::later(recurringFetch, delay = delay * 60)
             } else {
               message("Failed to calculate next fetch time. Retrying in 1 minute.")
               later::later(recurringFetch, delay = 60)
@@ -58,7 +58,7 @@ executionPipeline <- async(function() {
             delay <- calculateDelay(updateIntervalMinutes)
             if (!is.na(delay)) {
               message(sprintf("Next fetch scheduled in %.2f minutes", delay))
-              later::later(recurringFetch, delay = delay * 60) 
+              later::later(recurringFetch, delay = delay * 60)
             } else {
               message("Failed to calculate next fetch time. Retrying in 1 minute.")
               later::later(recurringFetch, delay = 60)
@@ -70,7 +70,7 @@ executionPipeline <- async(function() {
       initial_delay <- calculateDelay(updateIntervalMinutes)
       if (!is.na(initial_delay)) {
         message(sprintf("Initial fetch scheduled in %.2f minutes", initial_delay))
-        later::later(recurringFetch, delay = initial_delay * 60) 
+        later::later(recurringFetch, delay = initial_delay * 60)
       } else {
         message("Failed to calculate initial fetch time. Starting immediately.")
         recurringFetch()

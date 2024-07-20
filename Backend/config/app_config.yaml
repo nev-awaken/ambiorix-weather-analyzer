@@ -1,5 +1,5 @@
 database_info:
-  DB_NAME : 'weather_analytics'
+  DB_NAME : 'weather_analytics.sqlite'
   DB_LOCATION : 'data/'
 
 api_info:
