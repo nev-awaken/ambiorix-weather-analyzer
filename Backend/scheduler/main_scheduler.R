@@ -6,7 +6,7 @@ box::use(
 
 box::use(
   coro[async, await],
-  lubridate[ceiling_date],
+  lubridate[ceiling_date, now, minutes],
   later
 )
 
@@ -29,58 +29,41 @@ calculateDelay <- function(interval_minutes) {
 
 #' @export
 executionPipeline <- async(function() {
-  tryCatch(
-    {
-      success <- await(setupDatabase())
-      if (!success) {
-        message("Database setup failed. Exiting execution pipeline.")
-        return(FALSE)
-      }
-
-      appInfo <- getAppSettingsInfo()
-      updateIntervalMinutes <- appInfo$updateIntervalMinutes
-
-      recurringFetch <- function() {
-        fetchAndStoreWeatherData()$then(
-          onFulfilled = function(value) {
-            message("Weather data fetched successfully")
-            delay <- calculateDelay(updateIntervalMinutes)
-            if (!is.na(delay)) {
-              message(sprintf("Next fetch scheduled in %.2f minutes", delay))
-              later::later(recurringFetch, delay = delay * 60)
-            } else {
-              message("Failed to calculate next fetch time. Retrying in 1 minute.")
-              later::later(recurringFetch, delay = 60)
-            }
-          },
-          onRejected = function(reason) {
-            message(paste("Failed to fetch weather data:", reason))
-            delay <- calculateDelay(updateIntervalMinutes)
-            if (!is.na(delay)) {
-              message(sprintf("Next fetch scheduled in %.2f minutes", delay))
-              later::later(recurringFetch, delay = delay * 60)
-            } else {
-              message("Failed to calculate next fetch time. Retrying in 1 minute.")
-              later::later(recurringFetch, delay = 60)
-            }
-          }
-        )
-      }
-
-      initial_delay <- calculateDelay(updateIntervalMinutes)
-      if (!is.na(initial_delay)) {
-        message(sprintf("Initial fetch scheduled in %.2f minutes", initial_delay))
-        later::later(recurringFetch, delay = initial_delay * 60)
-      } else {
-        message("Failed to calculate initial fetch time. Starting immediately.")
-        recurringFetch()
-      }
-
-      return(TRUE)
-    },
-    error = function(e) {
-      message(sprintf("Error in executionPipeline: %s", e$message))
+  tryCatch({
+    success <- await(setupDatabase())
+    if (!success) {
+      message("Database setup failed. Exiting execution pipeline.")
       return(FALSE)
     }
-  )
+    
+    appInfo <- getAppSettingsInfo()
+    updateIntervalMinutes <- appInfo$updateIntervalMinutes
+
+    recurringFetch <- function() {
+      message("Starting recurring fetch")
+      fetchAndStoreWeatherData()$then(
+        onFulfilled = function(value) {
+          nextFetchTime <- now() + minutes(updateIntervalMinutes)
+          message(sprintf("Next fetch scheduled at %s", format(nextFetchTime, "%Y-%m-%d %H:%M:%S")))
+          later::later(recurringFetch, delay = updateIntervalMinutes * 60)
+        },
+        onRejected = function(reason) {
+          message(paste("Failed to fetch weather data:", reason))
+          later::later(recurringFetch, delay = 60)  
+        }
+      )
+    }
+
+    await(fetchAndStoreWeatherData())
+    print("First fetchAndStoreWeatherData completed")
+
+    later::later(recurringFetch, delay = updateIntervalMinutes * 60)
+
+
+    return(TRUE)
+  }, error = function(e) {
+    message(sprintf("Error in executionPipeline: %s", e$message))
+    return(FALSE)
+  })
 })
+

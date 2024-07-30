@@ -4,18 +4,9 @@ box::use(
 )
 
 box::use(
-  ../ .. / helper / utils[getDBInfo, getAPIInfo],
+  ../ .. / helper / utils[getDBInfo, getAPIInfo, deleteDBIfExists],
   .. / setup_database / db_table_list[create_table_queries_list]
 )
-
-createTables <- async(function(mydb) {
-  tryCatch({
-    lapply(create_table_queries_list, function(query) dbExecute(mydb, query))
-    print("Tables created successfully")
-  }, error = function(e) {
-    message(sprintf('Error in createTables(): %s', e$message))
-  })
-})
 
 insertAPIInfo <- async(function(mydb) {
   tryCatch({
@@ -40,9 +31,23 @@ insertAPIInfo <- async(function(mydb) {
   })
 })
 
+
+createTables <- async(function(mydb) {
+  tryCatch({
+    lapply(create_table_queries_list, function(query) dbExecute(mydb, query))
+    print("Tables created successfully")
+  }, error = function(e) {
+    message(sprintf('Error in createTables(): %s', e$message))
+  })
+})
+
+
 setupDatabase <- async(function() {
   tryCatch(
     {
+      #For testing, deleting old DB
+      deleteDBIfExists()
+
       dbInfo <- getDBInfo()
       dbName <- dbInfo$dbName
       dbLocation <- dbInfo$dbLocation

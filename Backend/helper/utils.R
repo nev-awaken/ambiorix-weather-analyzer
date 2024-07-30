@@ -2,22 +2,16 @@ box::use(
   yaml[read_yaml],
   httr2[url_parse, url_build],
   pool[dbPool, poolClose],
-  RSQLite[SQLite, dbConnect]
+  RSQLite[SQLite, dbConnect],
+  fs[dir_delete]
 )
 
-
+# <------------Read Yaml File----------------->
 readYaml <- function() {
   yaml::read_yaml("config/app_config.yaml")
 }
 
-
-getDBInfo <- function() {
-  app_config <- readYaml()
-  dbName <- app_config$database_info$DB_NAME
-  dbLocation <- app_config$database_info$DB_LOCATION
-  return(list("dbName" = dbName, "dbLocation" = dbLocation))
-}
-
+# <-------------BackEnd Info------------------>
 getAppSettingsInfo <- function() {
   app_config <- readYaml()
   port <- app_config$app_settings$port
@@ -33,7 +27,7 @@ getAppSettingsInfo <- function() {
   )
 }
 
-
+# <------------------ Storing API Info from Yaml into DB----------------->
 getAPIInfo <- function(latitude = NULL, longitude = NULL) {
   app_config <- readYaml()
   
@@ -73,6 +67,15 @@ getAPIInfo <- function(latitude = NULL, longitude = NULL) {
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
 
+# <------------------ Database Connection Related function -------------------->
+
+getDBInfo <- function() {
+  app_config <- readYaml()
+  dbName <- app_config$database_info$DB_NAME
+  dbLocation <- app_config$database_info$DB_LOCATION
+  return(list("dbName" = dbName, "dbLocation" = dbLocation))
+}
+
 initDBPool <- function() {
   dbInfo <- getDBInfo()
   dbName <- dbInfo$dbName
@@ -87,4 +90,37 @@ initDBPool <- function() {
   return(dbPool)
 }
 
-box::export(getDBInfo, getAppSettingsInfo, getAPIInfo, initDBPool)
+closePool <- function(pool) {
+  if (!is.null(pool)) {
+    tryCatch({
+      poolClose(pool)
+    }, error = function(e) {
+      message(sprintf("Error closing pool: %s", e$message))
+    })
+  }
+}
+
+#<----------------get app testing info-------------------->
+deleteDBIfExists <- function() {
+  tryCatch({
+
+    app_config <- readYaml()
+    if (app_config$app_testing_params$delete_db) {
+
+      db_dir <- file.path(app_config$database_info$DB_LOCATION)
+
+      if (dir.exists(db_dir)) {
+        dir_delete(db_dir)
+        message("Database directory deleted: ", db_dir)
+      } else {
+        message("Database directory does not exist: ", db_dir)
+      }
+    } else {
+      message("Database deletion not requested")
+    }
+  }, error = function(e) {
+    message(sprintf('Error in deleteDBIfExists: %s', e$message))
+  })
+}
+
+box::export(getDBInfo, getAppSettingsInfo, getAPIInfo, initDBPool, closePool, deleteDBIfExists)

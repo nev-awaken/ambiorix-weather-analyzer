@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS api_parameters (
 create_temperature_data_table <- "
 CREATE TABLE IF NOT EXISTS temperature_data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    timestamp DATETIME NOT NULL,
     temperature REAL NOT NULL,
     units TEXT NOT NULL,
     api_parameters_id INTEGER,
