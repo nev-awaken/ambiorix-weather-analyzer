@@ -26,6 +26,15 @@ CREATE TABLE IF NOT EXISTS temperature_data (
 );
 "
 
-create_table_queries_list <-  list(create_api_parameters_table, create_temperature_data_table)
+create_user_login_table  <- "
+CREATE TABLE IF NOT EXISTS user_login (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT,
+    password TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+"
+
+create_table_queries_list <-  list(create_api_parameters_table, create_temperature_data_table, create_user_login_table)
 
 box::export(create_table_queries_list)

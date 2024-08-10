@@ -1,13 +1,15 @@
 box::use(
-  ./helper/utils[getDBInfo, getAppSettingsInfo],
-  ./helper/load_libraries[load_all_libraries],
-  ./router/weather_info[router],
-  ./scheduler/main_scheduler[executionPipeline]
+  . / helper / utils[getDBInfo, getAppSettingsInfo],
+  . / helper / load_libraries[load_all_libraries],
+  . / router / weather_info[router],
+  . / scheduler / main_scheduler[executionPipeline],
+  . / helper / middleware[cors]
 )
 
 box::use(
   future[plan, multisession],
   ambiorix[Ambiorix],
+  agris[agris],
   promises[promise_all],
   RSQLite[dbConnect, SQLite, dbDisconnect]
 )
@@ -22,23 +24,22 @@ localhost <- app_settings$host
 
 app <- Ambiorix$new()
 
-app$use(function(req, res) {
-  res$header("Access-Control-Allow-Origin", "*")
-  res$header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-  res$header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+# CORS middleware
+cors <- \(req, res) {
+  res$header("Access-Control-Allow-Origin", "127.0.0.1:1001")  
+
+}
+
+app$get("/test", \(req, res) {
+  res$send("CORS Test Successful!")
 })
 
-app$options("*", function(req, res) {
-  res$header("Access-Control-Allow-Origin", "*")
-  res$header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-  res$header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-  res$send()
-})
 
+app$use(cors)
 app$use(router)
 
 
 promise_all(executionPipeline())
 
-# Start the server
+
 app$start(port = PORT, host = localhost)

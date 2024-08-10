@@ -3,7 +3,8 @@ box::use(
   httr2[url_parse, url_build],
   pool[dbPool, poolClose],
   RSQLite[SQLite, dbConnect],
-  fs[dir_delete]
+  fs[dir_delete],
+  DBI[dbDisconnect]
 )
 
 # <------------Read Yaml File----------------->
@@ -80,25 +81,69 @@ initDBPool <- function() {
   dbInfo <- getDBInfo()
   dbName <- dbInfo$dbName
   dbLocation <- dbInfo$dbLocation
-  fullPath <- paste0("./", dbLocation, dbName)
+  fullPath <- file.path(".", dbLocation, dbName)
   
-  dbPool <- dbPool(
-    drv = SQLite(),
-    dbname = fullPath
-  )
-  
-  return(dbPool)
+  tryCatch({
+    dbPool <- dbPool(
+      drv = SQLite(),
+      dbname = fullPath
+    )
+    print(paste("Database pool initialized with path:", fullPath))
+    return(dbPool)
+  }, error = function(e) {
+    print(paste("Error initializing database pool:", e$message))
+    stop(e)
+  })
 }
 
 closePool <- function(pool) {
   if (!is.null(pool)) {
     tryCatch({
       poolClose(pool)
+      print("Pool closed successfully")
     }, error = function(e) {
-      message(sprintf("Error closing pool: %s", e$message))
+      print(paste("Error closing pool:", e$message))
+      tryCatch({
+        conn <- poolCheckout(pool)
+        dbDisconnect(conn)
+        print("Fallback: individual connection closed")
+      }, error = function(e2) {
+        print(paste("Error closing individual connection:", e2$message))
+      })
+    })
+  } else {
+    print("No pool to close")
+  }
+}
+
+
+connectToDB <- function() {
+  dbInfo <- getDBInfo()
+  dbName <- dbInfo$dbName
+  dbLocation <- dbInfo$dbLocation
+  fullPath <- file.path(".", dbLocation, dbName)
+  
+  tryCatch({
+    conn <- dbConnect(SQLite(), dbname = fullPath)
+    print(paste("Database connected with path:", fullPath))
+    return(conn)
+  }, error = function(e) {
+    print(paste("Error connecting to database:", e$message))
+    stop(e)
+  })
+}
+
+closeDBConnection <- function(conn) {
+  if (!is.null(conn)) {
+    tryCatch({
+      dbDisconnect(conn)
+      print("Database connection closed")
+    }, error = function(e) {
+      print(paste("Error closing database connection:", e$message))
     })
   }
 }
+
 
 #<----------------get app testing info-------------------->
 deleteDBIfExists <- function() {
@@ -123,4 +168,4 @@ deleteDBIfExists <- function() {
   })
 }
 
-box::export(getDBInfo, getAppSettingsInfo, getAPIInfo, initDBPool, closePool, deleteDBIfExists)
+box::export(getDBInfo, getAppSettingsInfo, getAPIInfo, initDBPool, closePool, deleteDBIfExists, connectToDB, closeDBConnection)
