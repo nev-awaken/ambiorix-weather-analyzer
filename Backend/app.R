@@ -10,8 +10,7 @@ box::use(
   future[plan, multisession],
   ambiorix[Ambiorix],
   agris[agris],
-  promises[promise_all],
-  RSQLite[dbConnect, SQLite, dbDisconnect]
+  promises[promise_all]
 )
 
 load_all_libraries()
@@ -24,19 +23,15 @@ localhost <- app_settings$host
 
 app <- Ambiorix$new()
 
-# CORS middleware
-cors <- \(req, res) {
-  res$header("Access-Control-Allow-Origin", "127.0.0.1:1001")  
 
-}
 
 app$get("/test", \(req, res) {
   res$send("CORS Test Successful!")
 })
 
 
-app$use(cors)
 app$use(router)
+app$use(cors)
 
 
 promise_all(executionPipeline())

@@ -18,6 +18,9 @@ app_settings:
   port: 1001
   host: "127.0.0.1"
 
+front_end_info :
+  host: "http://localhost"
+  port: 3000
 
 app_testing_params :
   delete_db : true
