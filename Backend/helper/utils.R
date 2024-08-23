@@ -28,6 +28,18 @@ getAppSettingsInfo <- function() {
   )
 }
 
+getFrontEndInfo <- function(){
+  app_config <- readYaml()
+  host <- app_config$front_end_info$host
+  port <- app_config$front_end_info$port
+
+  return(list(
+      "port" = port,
+      "host" = host
+    )
+  )
+}
+
 # <------------------ Storing API Info from Yaml into DB----------------->
 getAPIInfo <- function(latitude = NULL, longitude = NULL) {
   app_config <- readYaml()
@@ -168,4 +180,4 @@ deleteDBIfExists <- function() {
   })
 }
 
-box::export(getDBInfo, getAppSettingsInfo, getAPIInfo, initDBPool, closePool, deleteDBIfExists, connectToDB, closeDBConnection)
+box::export(getDBInfo, getAppSettingsInfo, getAPIInfo, initDBPool, closePool, deleteDBIfExists, connectToDB, closeDBConnection, getFrontEndInfo)

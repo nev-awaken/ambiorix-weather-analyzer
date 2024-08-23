@@ -1,7 +1,7 @@
 # controller/checkUserCredentials.R
 box::use(
   coro[async],
-  ambiorix[parse_multipart],
+  ambiorix[parse_json],
   DBI[dbGetQuery, dbDisconnect],
   pool[poolCheckout, poolReturn]
 )
@@ -10,17 +10,21 @@ box::use(
   .. / helper / utils[connectToDB, closeDBConnection]
 )
 
-# '@export
+#' @export
 checkUserCredentials <- async(function(req, res) {
   conn <- NULL
   status_code <- NULL
   response_message <- ""
   
   tryCatch({
-    parsed_body <- parse_multipart(req)
+    
+    parsed_body <- parse_json(req)
 
     email <- parsed_body$email
     password <- parsed_body$password
+
+
+    print(parsed_body)
 
     if (is.null(email) || is.null(password)) {
       status_code <- 400L
@@ -34,6 +38,7 @@ checkUserCredentials <- async(function(req, res) {
     result <- dbGetQuery(conn, query, params = list(email, password))
 
     if (nrow(result) > 0) {
+      print("In here 1")
       response_message <- "User authenticated"
       status_code <- 200L
     } else {
@@ -52,10 +57,9 @@ checkUserCredentials <- async(function(req, res) {
     return(res$json(status = 500, body = list(message = response_message)))
   })
 
-  print("Finished checkUserCredentials")
 })
 
-# '@export
+#' @export
 checkUser <- async(function(req, res) {
   res$json(status = 500, body = list(message = "checkUser tester"))
 })
