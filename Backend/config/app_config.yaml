@@ -23,4 +23,4 @@ front_end_info :
   port: 3000
 
 app_testing_params :
-  delete_db : true
+  delete_db : false
